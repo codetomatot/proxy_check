@@ -2,12 +2,18 @@ import os
 import json
 import requests
 import threading
+import argparse
 from pathlib import Path
-from bs4 import BeautifulSoup
 from colorama import Fore, Style, init
 init(autoreset=True)
-# print(Fore.RED + 'some red text')
-# print(Style.RESET_ALL)
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-u', '--url', type=str, required=True, help="The URL which contains proxy data")
+ap.add_argument('-lt', '--list_type', type=str, required=True, help="name")
+ap.add_argument('-v', '--verbose', help="more descri[tive output")
+args = ap.parse_args()
+valid_types = ["json_raw", "text", "ip+p", "csv"] #ip+p = ip and port ONLY!!
+# if args.list_type 
 
 cwd = os.getcwd()
 
@@ -39,25 +45,28 @@ def file_handler():
         os.system(f'touch {FILE}')
         return "0"
 
-bolf = file_handler()
-ips = []
-ports = []
-protos = []
-if bolf != "0":
-    fre = json.load(bolf)
-    for i in fre["data"]:
-        ips.append(i["ip"])
-        ports.append(i["port"])
-        protos.append(i["protocols"][0])
-print(protos)
+def main():
+    bolf = file_handler()
+    ips = []
+    ports = []
+    protos = []
+    if bolf != "0":
+        fre = json.load(bolf)
+        for i in fre["data"]:
+            ips.append(i["ip"])
+            ports.append(i["port"])
+            protos.append(i["protocols"][0])
 
-for i in range(len(ips)):
-    proxy = {
-        f"{protos[i]}": f'{protos[i]}://{ips[i]}:{ports[i]}'
-    }
-    try:
-        print(f"{Fore.GREEN + '[*]'} {Style.RESET_ALL + f'Trying proxy: {proxy}'} ")
-        mkreq = requests.get("https://www.google.com", proxies=proxy)
-        print(mkreq)
-    except:
-        print(f"{Fore.RED + '[!]'} {Style.RESET_ALL + 'Bad proxy.'} ")
+    for i in range(len(ips)):
+        proxy = {
+            f"{protos[i]}": f'{protos[i]}://{ips[i]}:{ports[i]}'
+        }
+        try:
+            print(f"{Fore.GREEN + '[*]'} {Style.RESET_ALL + f'Trying proxy: {proxy}'} ")
+            mkreq = requests.get("https://www.google.com", proxies=proxy)
+            print(mkreq)
+        except:
+            print(f"{Fore.RED + '[!]'} {Style.RESET_ALL + 'Bad proxy.'} ")
+
+# if __name__ == "__main__":
+    # main()
