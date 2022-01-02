@@ -4,6 +4,10 @@ import requests
 import threading
 from pathlib import Path
 from bs4 import BeautifulSoup
+from colorama import Fore, Style, init
+init(autoreset=True)
+# print(Fore.RED + 'some red text')
+# print(Style.RESET_ALL)
 
 cwd = os.getcwd()
 
@@ -12,28 +16,48 @@ DEFAULT_TYPE = ".json"
 FILE = DEFAULT_FILENAME + DEFAULT_TYPE
 data_url = "https://proxylist.geonode.com/api/proxy-list?limit=50&page=1&sort_by=lastChecked&sort_type=desc"
 
-if os.path.isfile(FILE):
-    print(f"[*] file exists: {FILE} in {cwd}")
-    req = requests.get(url=data_url)
-    if req.status_code == 200:
-        with open(FILE, "w") as ft:
-            ft.write(req.text)
-            fr = open(FILE, "r")
-            cdata = json.dumps(json.load(fr), indent=4)
-            fr.close()
-            ft.close()
-        os.system("rm {}".format(FILE))
-        os.system("touch {}".format((FILE)))
-        with open(FILE, "w") as tfw:
-            tfw.write(cdata)
-            tfw.close()
-else:
-    print(False)
-    os.system(f'touch {FILE}')
+def file_handler():
+    if os.path.isfile(FILE):
+        print(f"{Fore.GREEN+'[*]'} {Style.RESET_ALL + f'file exists: {FILE} in {cwd}'}")
+        req = requests.get(url=data_url)
+        if req.status_code == 200:
+            with open(FILE, "w") as ft:
+                ft.write(req.text)
+                fr = open(FILE, "r")
+                cdata = json.dumps(json.load(fr), indent=4)
+                fr.close()
+                ft.close()
+            os.system("rm {}".format(FILE))
+            os.system("touch {}".format((FILE)))
+            with open(FILE, "w") as tfw:
+                tfw.write(cdata)
+                tfw.close()  
+            f = open(FILE, "r")
+            return f   
+    else:
+        print(False)
+        os.system(f'touch {FILE}')
+        return "0"
 
+bolf = file_handler()
+ips = []
+ports = []
+protos = []
+if bolf != "0":
+    fre = json.load(bolf)
+    for i in fre["data"]:
+        ips.append(i["ip"])
+        ports.append(i["port"])
+        protos.append(i["protocols"][0])
+print(protos)
 
-proxy = {
-    'http': 'socks5://67.109.31.192:20000'
-}
-#ip_req = requests.get("http://www.google.com",proxies=data)
-#print(ip_req) 
+for i in range(len(ips)):
+    proxy = {
+        f"{protos[i]}": f'{protos[i]}://{ips[i]}:{ports[i]}'
+    }
+    try:
+        print(f"{Fore.GREEN + '[*]'} {Style.RESET_ALL + f'Trying proxy: {proxy}'} ")
+        mkreq = requests.get("https://www.google.com", proxies=proxy)
+        print(mkreq)
+    except:
+        print(f"{Fore.RED + '[!]'} {Style.RESET_ALL + 'Bad proxy.'} ")
