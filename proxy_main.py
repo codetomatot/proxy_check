@@ -12,8 +12,6 @@ ap.add_argument('-u', '--url', type=str, required=True, help="The URL which cont
 ap.add_argument('-lt', '--list_type', type=str, required=True, help="name")
 ap.add_argument('-v', '--verbose', help="more descri[tive output")
 args = ap.parse_args()
-valid_types = ["json_raw", "text", "ip+p", "csv"] #ip+p = ip and port ONLY!!
-# if args.list_type 
 
 cwd = os.getcwd()
 
