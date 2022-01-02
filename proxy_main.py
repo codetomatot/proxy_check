@@ -8,19 +8,25 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 ap = argparse.ArgumentParser()
-ap.add_argument('-u', '--url', type=str, required=True, help="The URL which contains proxy data")
-ap.add_argument('-lt', '--list_type', type=str, required=True, help="name")
-ap.add_argument('-v', '--verbose', help="more descri[tive output")
+ap.add_argument('-u', '--url', type=str, required=True, help="The URL which contains proxy data") 
+ap.add_argument('-fn', '--file_name', type=str, required=False, help="force change output file name") 
+ap.add_argument('-ft', '--file_type', type=str, required=False, help="force change output file type") 
+ap.add_argument('-v', '--verbose', help="more descriptive output") 
+ap.add_argument('--testing_url', type=str, help="url to test proxy on") 
 args = ap.parse_args()
-valid_types = ["json_raw", "text", "ip+p", "csv"] #ip+p = ip and port ONLY!!
-# if args.list_type 
-
 cwd = os.getcwd()
 
-DEFAULT_FILENAME = "output"
-DEFAULT_TYPE = ".json"
+if args.file_name or args.file_type:
+    DEFAULT_FILENAME = args.file_name
+    DEFAULT_TYPE = args.file_type
+else:
+    DEFAULT_FILENAME = "output"
+    DEFAULT_TYPE = ".json"
+
 FILE = DEFAULT_FILENAME + DEFAULT_TYPE
-data_url = "https://proxylist.geonode.com/api/proxy-list?limit=50&page=1&sort_by=lastChecked&sort_type=desc"
+# print(FILE)
+# default url = https://proxylist.geonode.com/api/proxy-list?limit=50&page=1&sort_by=lastChecked&sort_type=desc
+data_url = args.url
 
 def file_handler():
     if os.path.isfile(FILE):
@@ -62,11 +68,20 @@ def main():
             f"{protos[i]}": f'{protos[i]}://{ips[i]}:{ports[i]}'
         }
         try:
-            print(f"{Fore.GREEN + '[*]'} {Style.RESET_ALL + f'Trying proxy: {proxy}'} ")
-            mkreq = requests.get("https://www.google.com", proxies=proxy)
-            print(mkreq)
+            #default = https://www.google.com
+            if args.testing_url:
+                mkreq = requests.get(args.testing_url, proxies=proxy)
+            else:
+                mkreq = requests.get("https://www.google.com", proxies=proxy)
+            if args.verbose:
+                print(f"{Fore.GREEN + '[*]'} {Style.RESET_ALL + f'Trying proxy: {proxy}'} ")
+                print(mkreq)
+            else:
+                if mkreq.status_code == 200:
+                    print(f'{proxy} is working')
+                
         except:
             print(f"{Fore.RED + '[!]'} {Style.RESET_ALL + 'Bad proxy.'} ")
 
-# if __name__ == "__main__":
-    # main()
+if __name__ == "__main__":
+    main()
