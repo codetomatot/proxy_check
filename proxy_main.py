@@ -1,5 +1,6 @@
 import os
 import json
+import timeit
 import requests
 import threading
 import argparse
@@ -11,8 +12,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument('-u', '--url', type=str, required=True, help="The URL which contains proxy data") 
 ap.add_argument('-fn', '--file_name', type=str, required=False, help="force change output file name") 
 ap.add_argument('-ft', '--file_type', type=str, required=False, help="force change output file type") 
-ap.add_argument('-v', '--verbose', help="more descriptive output") 
-ap.add_argument('--testing_url', type=str, help="url to test proxy on") 
+ap.add_argument('-v', '--verbose', required=False, help="more descriptive output") 
+ap.add_argument('--testing_url', type=str, required=False, help="url to test proxy on")
+ap.add_argument('-t', '--timeout', type=int, required=False, help="see faster proxies")
 args = ap.parse_args()
 cwd = os.getcwd()
 
@@ -34,22 +36,21 @@ def file_handler():
         req = requests.get(url=data_url)
         if req.status_code == 200:
             with open(FILE, "w") as ft:
-                ft.write(req.text)
-                fr = open(FILE, "r")
-                cdata = json.dumps(json.load(fr), indent=4)
+                ft.write(req.text) #req.content in bytes. write function only takes string
+                with open(FILE, "r") as fr:
+                    cdata = json.dumps(json.load(fr), indent=4)
+                    print(os.path.getsize(FILE))
+                ft.truncate(0)
                 fr.close()
-                ft.close()
-            os.system("rm {}".format(FILE))
-            os.system("touch {}".format((FILE)))
-            with open(FILE, "w") as tfw:
-                tfw.write(cdata)
-                tfw.close()  
+            ft.close()
+            rop = open(FILE, "w")
+            rop.write(cdata)
             f = open(FILE, "r")
-            return f   
+            return f
     else:
         print(False)
         os.system(f'touch {FILE}')
-        return "0"
+        file_handler()
 
 def main():
     bolf = file_handler()
@@ -67,21 +68,28 @@ def main():
         proxy = {
             f"{protos[i]}": f'{protos[i]}://{ips[i]}:{ports[i]}'
         }
+        
         try:
-            #default = https://www.google.com
             if args.testing_url:
                 mkreq = requests.get(args.testing_url, proxies=proxy)
             else:
                 mkreq = requests.get("https://www.google.com", proxies=proxy)
+                # eTime = timeit.timeit(mkreq) <--errors
+                # print(eTime)
+
             if args.verbose:
                 print(f"{Fore.GREEN + '[*]'} {Style.RESET_ALL + f'Trying proxy: {proxy}'} ")
-                print(mkreq)
+                if mkreq.status_code != 200:
+                    raise ConnectionError
+                else:
+                    print(mkreq)
             else:
                 if mkreq.status_code == 200:
                     print(f'{proxy} is working')
                 
         except:
-            print(f"{Fore.RED + '[!]'} {Style.RESET_ALL + 'Bad proxy.'} ")
+            print(f"{Fore.RED + '[!]'} {Style.RESET_ALL + f'{proxy} is a Bad proxy.'} ")
+
 
 if __name__ == "__main__":
     main()
